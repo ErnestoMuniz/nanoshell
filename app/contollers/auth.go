@@ -5,10 +5,8 @@ import (
 	"nanoshell/database"
 	"nanoshell/database/models"
 	"nanoshell/utils"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -48,15 +46,8 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Generate JWT token
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	claims := token.Claims.(jwt.MapClaims)
-	claims["user_id"] = user.ID
-	claims["admin"] = user.Admin
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-
-	t, err := token.SignedString([]byte("your-secret-key")) // TODO: Use env variable
+	// Generate JWT token using helper function
+	token, err := utils.GenerateToken(user)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Could not generate token",
@@ -64,8 +55,7 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(fiber.Map{
-		"token": t,
+		"token": token,
 		"user":  user,
 	})
-
 }
